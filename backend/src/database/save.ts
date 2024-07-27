@@ -3,9 +3,11 @@ import * as path from 'path';
 
 export class JsonFileStorage<T> {
   private filePath: string;
+  private writeQueue: Promise<void>;
 
   constructor(filename: string) {
     this.filePath = path.resolve(__dirname, filename);
+    this.writeQueue = Promise.resolve(); // Initialize the write queue
   }
 
   /**
@@ -13,6 +15,34 @@ export class JsonFileStorage<T> {
    * @returns Promise<T> 解析后的 JSON 对象
    */
   public async read(): Promise<T> {
+    await this.writeQueue; // Wait for any ongoing write operations to complete
+    return this.handleReadOperation();
+  }
+
+  /**
+   * 异步写入 JSON 文件内容
+   * @param data 要写入的 JSON 对象
+   * @returns Promise<void> 写入完成后解析
+   */
+  public async write(data: T): Promise<void> {
+    await this.writeQueue; // Wait for any ongoing write operations to complete
+    await this.handleWriteOperation(data);
+  }
+
+  /**
+   * 安全地异步写入 JSON 文件内容，确保写入操作按顺序执行
+   * @param data 要写入的 JSON 对象
+   * @returns Promise<void> 当前的写入操作完成后解析
+   */
+  public async safeWrite(data: T): Promise<void> {
+    // Add the new write operation to the queue and wait for it to complete
+    this.writeQueue = this.writeQueue.then(() =>
+      this.handleWriteOperation(data),
+    );
+    return this.writeQueue;
+  }
+
+  private async handleReadOperation(): Promise<T> {
     try {
       const fileContent = await fs.promises.readFile(this.filePath, 'utf8');
       return JSON.parse(fileContent) as T;
@@ -25,31 +55,8 @@ export class JsonFileStorage<T> {
     }
   }
 
-  /**
-   * 异步写入 JSON 文件内容
-   * @param data 要写入的 JSON 对象
-   * @returns Promise<void> 写入完成后解析
-   */
-  public async write(data: T): Promise<void> {
-    const fileContent = JSON.stringify(data, null, 2); // 格式化 JSON 字符串
-    await fs.promises.writeFile(this.filePath, fileContent, 'utf8');
-  }
-
-  // 私有属性，用于确保写入操作的顺序执行
-  private writeQueue: Promise<void> = Promise.resolve();
-
-  /**
-   * 安全地异步写入 JSON 文件内容，确保写入操作按顺序执行
-   * @param data 要写入的 JSON 对象
-   * @returns Promise<void> 当前的写入操作完成后解析
-   */
-  public async safeWrite(data: T): Promise<void> {
-    this.writeQueue = this.writeQueue.then(() => this.write(data));
-    return this.writeQueue;
+  private async handleWriteOperation(data: T): Promise<void> {
+    const jsonContent = JSON.stringify(data, null, 2);
+    await fs.promises.writeFile(this.filePath, jsonContent, 'utf8');
   }
 }
-
-// 使用示例
-// const storage = new JsonFileStorage<MyDataType>('data.json');
-// await storage.safeWrite(myData);
-// const data = await storage.read();
