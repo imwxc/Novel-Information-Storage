@@ -8,7 +8,7 @@ export interface Item {
 }
 
 // ItemService 接口定义了 CRUD 操作
-export interface ItemService {
+export interface ItemServiceInterface {
   // 创建一个新的物品
   createItem(item: Item): Promise<Item>;
 

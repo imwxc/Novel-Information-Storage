@@ -8,7 +8,7 @@ export interface ItemCategory {
 }
 
 // ItemCategoryService 接口定义了 CRUD 操作
-export interface ItemCategoryService {
+export interface ItemCategoryServiceInterface {
   // 创建一个新的物品分类
   createItemCategory(itemCategory: ItemCategory): Promise<ItemCategory>;
 
