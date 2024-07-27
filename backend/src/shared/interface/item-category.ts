@@ -1,13 +1,29 @@
-interface ItemCategory {
-  CategoryID: number;
-  CategoryName: string;
-  CreatedAt: Date;
-  UpdatedAt: Date;
+import { Item } from './item';
+
+// 物品分类表
+export interface ItemCategory {
+  categoryID: string;
+  categoryName: string;
+  itemIDs: Item['itemID'][];
 }
 
-interface ItemCategoryService {
-  createCategory(category: Omit<ItemCategory, 'CategoryID' | 'CreatedAt' | 'UpdatedAt'>): Promise<ItemCategory>;
-  getCategoryById(id: number): Promise<ItemCategory | null>;
-  updateCategory(id: number, updatedCategory: Partial<ItemCategory>): Promise<ItemCategory | null>;
-  deleteCategory(id: number): Promise<void>;
+// ItemCategoryService 接口定义了 CRUD 操作
+export interface ItemCategoryService {
+  // 创建一个新的物品分类
+  createItemCategory(itemCategory: ItemCategory): Promise<ItemCategory>;
+
+  // 获取所有物品分类
+  getAllItemCategories(): Promise<ItemCategory[]>;
+
+  // 根据分类ID获取物品分类
+  getItemCategoryById(categoryId: string): Promise<ItemCategory | null>;
+
+  // 更新物品分类
+  updateItemCategory(
+    categoryId: string,
+    updatedItemCategory: Partial<ItemCategory>,
+  ): Promise<ItemCategory | null>;
+
+  // 删除物品分类
+  deleteItemCategory(categoryId: string): Promise<void>;
 }
